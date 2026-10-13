@@ -1,0 +1,8 @@
+(version 1)
+; Existing system tools/libraries may be read. All persistent and temporary
+; filesystem writes by the app and its child processes stay in the checkout.
+(allow default)
+(deny file-write*)
+(allow file-write* (subpath (param "PROJECT_ROOT")))
+; Device I/O does not create project files outside the checkout.
+(allow file-write-data (literal "/dev/null") (literal "/dev/tty"))

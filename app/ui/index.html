@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Clipper</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <h1>justClipper</h1>
+            <span class="badge">Auto Edit</span>
+        </div>
+        <div id="diagnostics-panel" class="diagnostics">
+            Checking environment...
+        </div>
+    
+    </header>
+
+    <nav class="top-nav" style="display: flex; gap: 10px; padding: 10px 20px; background: #1a1a1a; border-bottom: 1px solid #333;">
+        <button id="nav-clipper" class="nav-btn active" onclick="showNav('clipper')" style="background: none; border: none; color: #fff; cursor: pointer; padding: 5px 10px; font-weight: bold;">✂ CLIPPER</button>
+        <button id="nav-trends" class="nav-btn" onclick="showNav('trends')" style="background: none; border: none; color: #aaa; cursor: pointer; padding: 5px 10px;">🔥 US CREATOR TRENDS</button>
+        <button id="nav-library" class="nav-btn" onclick="showNav('library')" style="background: none; border: none; color: #aaa; cursor: pointer; padding: 5px 10px;">LIBRARY</button>
+        <button id="nav-exports" class="nav-btn" onclick="showNav('exports')" style="background: none; border: none; color: #aaa; cursor: pointer; padding: 5px 10px;">EXPORTS</button>
+    </nav>
+
+    <main id="app-container">
+    
+
+
+    <div class="card" style="margin-bottom: 2rem; border-left: 4px solid #dc3545;">
+        <h3 style="margin-top: 0;"><i class="bi bi-youtube"></i> YouTube Publishing</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 2rem;">
+            <div>
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #aaa;">Connection Status</h4>
+                <div id="youtubeStatus" style="margin-bottom: 1rem;">
+                    <span style="background-color: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Checking...</span>
+                </div>
+                <div>
+                    <a href="/api/youtube/oauth/start" id="btnConnectYoutube" class="primary-btn" style="display: inline-block; background-color: #dc3545; color: white; text-decoration: none;">Connect YouTube</a>
+                    <button id="btnDisconnectYoutube" class="secondary-btn" style="display:none;" onclick="disconnectYoutube()">Disconnect</button>
+                </div>
+            </div>
+            
+            <div>
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #aaa;">Publishing Defaults</h4>
+                <div style="margin-bottom: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #aaa;">
+                        <input type="checkbox" id="autoPublish" disabled>
+                        Auto Publish (Requires Backend Config)
+                    </label>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.9rem; color: #aaa; margin-bottom: 0.25rem;">Default Privacy</label>
+                    <select disabled style="width: 100%; max-width: 200px; padding: 0.5rem; border: 1px solid #333; border-radius: 4px; background-color: #1a1a1a; color: white;">
+                        <option value="private">Private</option>
+                        <option value="unlisted">Unlisted</option>
+                        <option value="public" selected>Public</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+        
+        <!-- Step 0: Trends (Optional) -->
+        
+        <section id="step-trends" class="step">
+            <h2>US Creator Trends</h2>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                <div>
+                    <label style="font-weight: bold; margin-bottom: 8px; display: block;">Number of Shorts</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <label class="count-radio"><input type="radio" name="clip_count_trends" value="AUTO" checked> Auto</label>
+                        <label class="count-radio"><input type="radio" name="clip_count_trends" value="1"> 1</label>
+                        <label class="count-radio"><input type="radio" name="clip_count_trends" value="2"> 2</label>
+                        <label class="count-radio"><input type="radio" name="clip_count_trends" value="3"> 3</label>
+                        <label class="count-radio"><input type="radio" name="clip_count_trends" value="5"> 5</label>
+                        <label class="count-radio"><input type="radio" name="clip_count_trends" value="10"> 10</label>
+                    </div>
+                </div>
+                <button onclick="loadTrends(true)" class="secondary-btn">Refresh Trends</button>
+            </div>
+
+
+            <p>Recent English-language creator videos in the US market. Language is checked from metadata.</p>
+            <div id="trends-credential-warning" class="card" style="display:none; border-left: 4px solid #f44336;">
+                <h3>YouTube API Key Required</h3>
+                <p>To view live US trends, you must configure a YouTube Data API Key.</p>
+                <code>1. Open .env</code><br>
+                <code>2. Add YOUTUBE_DATA_API_KEY=your_key</code><br>
+                <code>3. Restart the server</code>
+                <br><br>
+                <button onclick="showNav('clipper')" class="secondary-btn">Skip and Upload Local File</button>
+            </div>
+            
+            <div id="trends-loading" style="display:none;">Loading US Trends...</div>
+            <div id="trends-grid" class="candidates-grid"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="btn-load-more-trends" onclick="loadTrends(false, true)" class="secondary-btn" style="display:none;">Load More</button>
+            </div>
+            
+            <hr style="margin: 20px 0; border-color: #333;">
+            <button onclick="showNav('clipper')" class="secondary-btn">Upload Local File Instead</button>
+        </section>
+
+        
+        <!-- Step: Library -->
+        <section id="step-library" class="step" style="display:none;">
+            <h2>Source Library</h2>
+            <p>Manage your acquired and processed sources.</p>
+            <div id="library-loading" style="display:none;">Loading sources...</div>
+            <div id="library-grid" class="candidates-grid"></div>
+        </section>
+
+        <!-- Step 1: Upload -->
+        
+        <section id="step-upload" class="step active">
+            <h2>Make Shorts</h2>
+            
+            <div class="card" style="margin-bottom: 2rem;">
+                <label for="youtube-url-input" style="font-weight: bold;">YouTube video</label>
+                <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; margin-bottom: 20px;">
+                    <input type="url" id="youtube-url-input" placeholder="Paste YouTube video link…" style="flex:1; min-width:220px; padding:12px;">
+                </div>
+                
+                <label style="font-weight: bold; margin-bottom: 8px; display: block;">Number of Shorts</label>
+                <div id="global-count-selector" style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <label class="count-radio"><input type="radio" name="clip_count_upload" value="AUTO" checked> Auto</label>
+                    <label class="count-radio"><input type="radio" name="clip_count_upload" value="1"> 1</label>
+                    <label class="count-radio"><input type="radio" name="clip_count_upload" value="2"> 2</label>
+                    <label class="count-radio"><input type="radio" name="clip_count_upload" value="3"> 3</label>
+                    <label class="count-radio"><input type="radio" name="clip_count_upload" value="5"> 5</label>
+                    <label class="count-radio"><input type="radio" name="clip_count_upload" value="10"> 10</label>
+                </div>
+                
+                <button type="button" id="btn-import-url" class="primary-btn">Make Shorts</button>
+                <p id="url-error" role="status" aria-live="polite" style="display:none; color: #ff5252; margin-top: 10px;"></p>
+            </div>
+
+            <h3>Or Upload Local File</h3>
+            <p>Choose a video for analysis. Your video will be uploaded to justClipper for processing.</p>
+            <div class="upload-area" id="drop-zone">
+                <input type="file" id="video-input" accept="video/mp4,video/quicktime" />
+                <p>Drag & Drop or Click to select (MP4/MOV)</p>
+            </div>
+        </section>
+
+
+        <!-- Step 2: Settings & Analysis -->
+        <section id="step-settings" class="step">
+            <h2>Video Metadata</h2>
+            <div id="metadata-display" class="card"></div>
+            
+            <div class="card">
+                <h2>Make Shorts</h2>
+                <p>Find complete stories, keep the strongest moments, and edit vertical Shorts with captions. The number and length follow the source.</p>
+                <button id="btn-make-shorts" class="primary-btn">Make Shorts</button>
+            </div>
+            <details id="advanced-settings">
+            <summary>Advanced settings / review edits manually</summary>
+            
+    
+
+            <div class="settings-form card">
+                <div class="form-group">
+                    <label>Target clip count:</label>
+                    <input type="number" id="setting-clip-count" value="5" min="1" max="30">
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="setting-exact-count"> Create the requested number of clips</label>
+                    <small>Extra timeline excerpts are marked for review when Gemini finds fewer distinct moments.</small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Min Duration (s):</label>
+                        <input type="number" id="setting-min-sec" value="30" min="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Duration (s):</label>
+                        <input type="number" id="setting-max-sec" value="60" min="10">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Editorial Guidance (Optional):</label>
+                    <input type="text" id="setting-guidance" placeholder="e.g. Focus on educational moments">
+                </div>
+                <div class="form-group">
+                    <label>Aspect Mode:</label>
+                    <select id="setting-aspect">
+                        <option value="center_crop">Center Crop (9:16)</option>
+                        <option value="fit_blur">Fit with Blur (9:16)</option>
+                        <option value="original">Original Aspect Ratio</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Resolution:</label>
+                    <select id="setting-resolution">
+                        <option value="1080x1920" selected>1080x1920</option>
+                        <option value="720x1280">720x1280</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Subtitles:</label>
+                    <select id="setting-subtitles">
+                        <option value="on">On (TikTok Style)</option>
+                        <option value="off">Off</option>
+                    </select>
+                    <small>Captions are transcribed from the final selected source segments.</small>
+                </div>
+                <button id="btn-analyze" class="primary-btn">Analyze with Gemini</button>
+            </div>
+            </details>
+            <div class="card">
+                <div id="analysis-progress-container" class="progress-container" style="display:none; margin-top:20px;">
+                    <div class="progress-header" style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span id="analysis-stage-label" style="font-weight:bold;">ANALYZING</span>
+                        <span id="analysis-pct-label">0%</span>
+                    </div>
+                    <div style="width:100%; height:10px; background:#333; border-radius:5px; overflow:hidden;">
+                        <div id="analysis-progress-bar" style="width:0%; height:100%; background:#4CAF50; transition:width 0.3s;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.9em; color:#aaa;">
+                        <span id="analysis-msg-label">Preparing...</span>
+                        <span id="analysis-eta-label">Estimating time remaining...</span>
+                    </div>
+                </div>
+                <div id="analysis-status" class="status-msg" role="status" aria-live="polite" style="display:none;"></div>
+            </div>
+        </section>
+
+        <!-- Step 3: Candidates -->
+        <section id="step-candidates" class="step">
+            <h2>Clip Candidates</h2>
+            <p id="source-summary" class="summary-text"></p>
+            <div id="candidates-list" class="candidates-grid"></div>
+            <div class="actions">
+                <button id="btn-render" class="primary-btn">Render Selected Clips</button>
+                <button id="btn-regenerate" class="secondary-btn">Change count / Reanalyze</button>
+            </div>
+            <div id="render-progress-container" class="progress-container" style="display:none; margin-top:20px;">
+                    <div class="progress-header" style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span id="render-stage-label" style="font-weight:bold;">RENDERING</span>
+                        <span id="render-pct-label">0%</span>
+                    </div>
+                    <div style="width:100%; height:10px; background:#333; border-radius:5px; overflow:hidden;">
+                        <div id="render-progress-bar" style="width:0%; height:100%; background:#2196F3; transition:width 0.3s;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.9em; color:#aaa;">
+                        <span id="render-msg-label">Preparing...</span>
+                        <span id="render-eta-label">Estimating time remaining...</span>
+                    </div>
+            </div>
+            <div id="render-status" class="status-msg" style="display:none;"></div>
+        </section>
+
+        <!-- Step 4: Results -->
+        <section id="step-results" class="step">
+            <h2>Render Results</h2>
+            <div id="results-list" class="results-grid"></div>
+            <div class="actions" style="margin-top:20px;">
+                <button id="btn-publish-all" class="primary-btn" disabled>Publish All to YouTube</button>
+                <small>Publishing makes the Shorts public.</small>
+            </div>
+            <div id="publish-all-status" class="status-msg" role="status" aria-live="polite"></div>
+            <button id="btn-new-job" class="secondary-btn">Start New Job</button>
+        </section>
+    </main>
+
+    <script src="/static/app.js?v=creator-workflow-1"></script>
+</body>
+</html>

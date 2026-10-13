@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  justclipper:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - YOUTUBE_DATA_API_KEY=${YOUTUBE_DATA_API_KEY}
+      - AUTONOMOUS_TRENDS_ENABLED=false
+      - DATA_ROOT=/data
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
